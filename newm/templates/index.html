@@ -9,13 +9,13 @@
         <div class="alert alert-danger">
           <h2>{{.Title}}</h2>
           <p>{{.Anons}}</p>
-          <a href="" class="btn btn-danger">Читать далее</a>
+          <a href="post/{{.Id}}" class="btn btn-danger">Читать далее</a>
         </div>
         {{else}}
         <p class="lead">Lorem ipsum dolor sit,</p>
         {{end}}
 
-          <a href="#" class="btn btn-lg btn-secondary fw-bold border-white bg-white " style="color: black;">Learn more</a>
+          <a href="/" class="btn btn-lg btn-secondary fw-bold border-white bg-white " style="color: black;">Learn more</a>
         </p>
       </main>
       {{template "footer"}}

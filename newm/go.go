@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/gorilla/mux"
 )
 type Artiles struct {
 	Id uint16 `json:"id"`
@@ -17,6 +18,7 @@ type Artiles struct {
 
 }
 var posts = []Artiles{}
+var showPost = Artiles{}
 func index(w http.ResponseWriter, r *http.Request) {
 	t, err := template.ParseFiles("newm/templates/index.html", "newm/templates/header.html", "newm/templates/footer.html")
 	if err != nil {
@@ -28,7 +30,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	defer db.Close()
-
+//Выборка
 	res, err := db.Query("SELECT* FROM `articles`")
 	if err != nil{
 		log.Println(err)	
@@ -77,13 +79,46 @@ func save_articles(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 }
+func show_post(w http.ResponseWriter, r *http.Request){
+	vars := mux.Vars(r)
+	t, err := template.ParseFiles("newm/templates/show.html", "newm/templates/header.html", "newm/templates/footer.html")
+	if err != nil {
+		log.Print(err)
+	}
+	db, err := sql.Open("mysql", "root:Vinter1973@tcp(127.0.0.1:3306)/golang")
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+	res, err := db.Query(fmt.Sprintf("SELECT* FROM `articles` WHERE `id` = '%s'",vars["id"]))
+	if err != nil{
+		log.Println(err)	
+		}
+	showPost = Artiles{}	
+	for res.Next(){
+		var post Artiles
+		err = res.Scan(&post.Id,&post.Title,&post.Anons,&post.Full_text)
+		if err != nil{
+			log.Println(err)
+		
+		}
+		showPost = post
+	}
+	t.ExecuteTemplate(w, "show", showPost)
+}
 
 func handleFunc() {
+	rtr:=mux.NewRouter()
+	rtr.HandleFunc("/", index).Methods("GET")
+	rtr.HandleFunc("/create", create).Methods("GET")
+	rtr.HandleFunc("/save_articles", save_articles).Methods("POST")
+	rtr.HandleFunc("/post/{id:[0-9]+}", show_post).Methods("GET")
+
+	http.Handle("/", rtr)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
-	http.HandleFunc("/", index)
-	http.HandleFunc("/create", create)
-	http.HandleFunc("/save_articles", save_articles)
+	
 	http.ListenAndServe(":8080", nil)
+
 
 }
 
